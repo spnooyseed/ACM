@@ -1,3 +1,5 @@
+
+
 # ACM模板
 
 ## 1	一切的开始
@@ -168,145 +170,208 @@ for(int k = 1; k <= n ;k ++ ) {
 **一般有两种方法解决分层图最短路问题：**
 
 1. **建图时直接建成k+1层。**
+2. **多开一维记录机会信息。也可以想成二维dp维护**     
 
-2. **多开一维记录机会信息。也可以想成二维dp维护**
+```cpp
+/*
+分层最短路的思想，其实就是在原图上建立很多的辅助点，然后用一个现有的算法(比如最短路算法)就可以很简单的解决问题
+其中两个最常用的解决问题方法：多层建图、二维dp维护
+*/
+```
 
-   #### 2.3.1	多层建图
+#### 2.3.1	多层建图
 
-   **我们建k+1层图。然后有边的两个点，多建一条到下一层边权为0的单向边，如果走了这条边就表示用了一次机会。**
+**我们建k+1层图。然后有边的两个点，多建一条到下一层边权为0的单向边，如果走了这条边就表示用了一次机会。**
 
-   **有N个点时，1~n表示第一层，（1+n）~（n+n）代表第二层，（1+2\*n）~（n+2\*n）代表第三层，（1+i\*n）~（n+i\*n）代表第i+1层。因为要建K+1层图，数组要开到n \* ( k + 1)，点的个数也为n \* ( k + 1 ) 。**
+**有N个点时，1~n表示第一层，（1+n）~（n+n）代表第二层，（1+2\*n）~（n+2\*n）代表第三层，（1+i\*n）~（n+i\*n）代表第i+1层。因为要建K+1层图，数组要开到n \* ( k + 1)，点的个数也为n \* ( k + 1 ) 。**
 
-   **对于数据：**
+**对于数据：**
 
-   **n  =  4，m  =  3， k  =  2**
+**n  =  4，m  =  3， k  =  2**
 
-   **0    1     100**
+**0    1     100**
 
-   **1    2    100**
+**1    2    100**
 
-   **2    3    100**
+**2    3    100**
 
-   **建成图之后大概是这样的：**
+**建成图之后大概是这样的：**
 
-   ![image-20201230141051149](C:\Users\spnooyseed\AppData\Roaming\Typora\typora-user-images\image-20201230141051149.png)
+![image-20201230141051149](C:\Users\spnooyseed\AppData\Roaming\Typora\typora-user-images\image-20201230141051149.png)
 
-   
 
-   意思就是这样的：如果免费使用一次机会的话，如果从u到v使用这次机会，那么就从u -> v + n,例如上图从0节点走到1 + n节点。
 
-   这样就相当于免费走了一次。
+意思就是这样的：如果免费使用一次机会的话，如果从u到v使用这次机会，那么就从u -> v + n,例如上图从0节点走到1 + n节点。
 
-   **注意：这个做法就相当于使用了kn倍的空间**
+这样就相当于免费走了一次。
 
-   > 例题：**通信线路**
-   >
-   > 在郊区有 N 座通信基站，P 条 **双向** 电缆，第 i 条电缆连接基站AiAi和BiBi。
-   >
-   > 特别地，1 号基站是通信公司的总站，N 号基站位于一座农场中。
-   >
-   > 现在，农场主希望对通信线路进行升级，其中升级第 i 条电缆需要花费LiLi。
-   >
-   > 电话公司正在举行优惠活动。
-   >
-   > 农产主可以指定一条从 1 号基站到 N 号基站的路径，并指定路径上不超过 K 条电缆，由电话公司免费提供升级服务。
-   >
-   > 农场主只需要支付在该路径上剩余的电缆中，升级价格最贵的那条电缆的花费即可。
-   >
-   > 求至少用多少钱可以完成升级。
-   >
-   >  **输入格式**
-   >
-   > 第1行：三个整数N，P，K。
-   >
-   > 第2..P+1行：第 i+1 行包含三个整数Ai,Bi,LiAi,Bi,Li。
-   >
-   > **输出格式**
-   >
-   > 包含一个整数表示最少花费。
-   >
-   > 若1号基站与N号基站之间不存在路径，则输出”-1”。
-   >
-   >  **数据范围**
-   >
-   > 0≤K<N≤10000≤K<N≤1000,
-   > 1≤P≤100001≤P≤10000,
-   > 1≤Li≤10000001≤Li≤1000000
-   >
-   > **输入样例：**
-   >
-   > ```cpp
-   > 5 7 1
-   > 1 2 5
-   > 3 1 4
-   > 2 4 8
-   > 3 2 3
-   > 5 2 9
-   > 3 4 7
-   > 4 5 6
-   > ```
-   >
-   > **输出样例：**
-   >
-   > ```cpp
-   > 4
-   > ```
+**注意：这个做法就相当于使用了kn倍的空间**
 
-   ```cpp
-   
-   int e[N * 2] , ne[N * 2] , h[N * 2] , idx , w[N * 2] , n , k , p;
-   void add(int a , int b , int c) {
-     e[idx] = b, ne[idx] = h[a] , w[idx] = c , h[a] = idx ++ ;
-   }
-   int dis[N] ;
-   bool vis[N] ;
-   void dijkstra() {
-     priority_queue<PII , vector<PII> , greater<PII> > q ;
-     memset(dis , 0x3f , sizeof dis) ;
-     dis[1] = 0 ;
-     q.push({0 , 1}) ;
-     while(q.size()) {
-       int u = q.top().y ;
-       q.pop() ;
-       if(vis[u]) continue ;
-       vis[u] = 1 ;
-       // cout << " u ==  " << u << "\n" ;
-       for(int i = h[u] ; ~i ; i = ne[i]) {
-         int v = e[i] ;
-         int maxn = max(dis[u] , w[i]) ;
-         if(dis[v] > maxn) {
-           // cout << " v == " << v << " " << maxn << "\n" ;
-           dis[v] = maxn;
-           q.push({dis[v] , v}) ;
-         }
-       }
-     }
-   }
-   int work()
-   {
-     memset(h , -1 , sizeof h) ;
-     cin >> n >> p >> k ;
-     for(int i = 1 ;i <= p ; i ++ ) {
-       int a , b , c ;
-       cin >> a >> b >> c ;
-       // a -- , b -- ;
-       add(a , b , c) ;
-       add(b , a , c) ;
-       for(int j = 0 ;j < k ;j ++ ) {
-         add(a + j * n , b + (j + 1) * n , 0) ;
-         add(b + j * n , a + (j + 1) * n , 0) ;
-         add(b + (j + 1) * n , a + (j + 1) * n , c) ;
-         add(a + (j + 1) * n , b + (j + 1) * n , c) ;
-       }
-     }
-     dijkstra() ;
-     int ans = INF ;
-     for(int i = 0 ;i <= k + 1; i ++ )
-      ans = min(ans , dis[i * n]) ;
-     if(ans == INF) ans = -1 ;
-     cout << ans << "\n" ;
-     return 0 ;
-   }
-   ```
+> 例题：**通信线路**
+>
+> 在郊区有 N 座通信基站，P 条 **双向** 电缆，第 i 条电缆连接基站AiAi和BiBi。
+>
+> 特别地，1 号基站是通信公司的总站，N 号基站位于一座农场中。
+>
+> 现在，农场主希望对通信线路进行升级，其中升级第 i 条电缆需要花费LiLi。
+>
+> 电话公司正在举行优惠活动。
+>
+> 农产主可以指定一条从 1 号基站到 N 号基站的路径，并指定路径上不超过 K 条电缆，由电话公司免费提供升级服务。
+>
+> 农场主只需要支付在该路径上剩余的电缆中，升级价格最贵的那条电缆的花费即可。
+>
+> 求至少用多少钱可以完成升级。
+>
+>  **输入格式**
+>
+> 第1行：三个整数N，P，K。
+>
+> 第2..P+1行：第 i+1 行包含三个整数Ai,Bi,LiAi,Bi,Li。
+>
+> **输出格式**
+>
+> 包含一个整数表示最少花费。
+>
+> 若1号基站与N号基站之间不存在路径，则输出”-1”。
+>
+>  **数据范围**
+>
+> 0≤K<N≤10000≤K<N≤1000,
+> 1≤P≤100001≤P≤10000,
+> 1≤Li≤10000001≤Li≤1000000
+>
+> **输入样例：**
+>
+> ```cpp
+> 5 7 1
+> 1 2 5
+> 3 1 4
+> 2 4 8
+> 3 2 3
+> 5 2 9
+> 3 4 7
+> 4 5 6
+> ```
+>
+> **输出样例：**
+>
+> ```cpp
+> 4
+> ```
 
-   #### 2.3.1	dp维护
+```cpp
+
+int e[N * 2] , ne[N * 2] , h[N * 2] , idx , w[N * 2] , n , k , p;
+void add(int a , int b , int c) {
+  e[idx] = b, ne[idx] = h[a] , w[idx] = c , h[a] = idx ++ ;
+}
+int dis[N] ;
+bool vis[N] ;
+void dijkstra() {
+  priority_queue<PII , vector<PII> , greater<PII> > q ;
+  memset(dis , 0x3f , sizeof dis) ;
+  dis[1] = 0 ;
+  q.push({0 , 1}) ;
+  while(q.size()) {
+    int u = q.top().y ;
+    q.pop() ;
+    if(vis[u]) continue ;
+    vis[u] = 1 ;
+    // cout << " u ==  " << u << "\n" ;
+    for(int i = h[u] ; ~i ; i = ne[i]) {
+      int v = e[i] ;
+      int maxn = max(dis[u] , w[i]) ;
+      if(dis[v] > maxn) {
+        // cout << " v == " << v << " " << maxn << "\n" ;
+        dis[v] = maxn;
+        q.push({dis[v] , v}) ;
+      }
+    }
+  }
+}
+int work()
+{
+  memset(h , -1 , sizeof h) ;
+  cin >> n >> p >> k ;
+  for(int i = 1 ;i <= p ; i ++ ) {
+    int a , b , c ;
+    cin >> a >> b >> c ;
+    // 当前层建图
+    add(a , b , c) ;
+    add(b , a , c) ;
+    for(int j = 0 ;j < k ;j ++ ) {
+      add(a + j * n , b + (j + 1) * n , 0) ; // 当前层和下一层建图、这个是单向，表示a->b免费使用一次
+      add(b + j * n , a + (j + 1) * n , 0) ; // 当前层和下一层建图、这个也是单向，表示b -> a免费使用一次，切记建立双边
+      add(b + (j + 1) * n , a + (j + 1) * n , c) ;
+      add(a + (j + 1) * n , b + (j + 1) * n , c) ;
+    }
+  }
+  dijkstra() ;
+  int ans = INF ;
+  for(int i = 0 ;i <= k + 1; i ++ )
+   ans = min(ans , dis[i * n]) ;
+  if(ans == INF) ans = -1 ;
+  cout << ans << "\n" ;
+  return 0 ;
+}
+```
+
+#### 2.3.2	二维dp维护
+
+```cpp
+// dp[i][j] 表示到u这个点使用了j次免费机会，那么转移就是
+// dp[v][0] = max(dp[u][0] , w[i]) ;
+// dp[v][j] = min(dp[u][j - 1] , max(dp[u][j] , w[i])) ;
+int dp[1100][1100] ;
+int n , m , k , e[N] , ne[N] , w[N] , h[N] , idx ;
+void add(int a , int b , int c) {
+  e[idx] = b , ne[idx] = h[a] , w[idx] = c , h[a] = idx ++ ;
+}
+bool vis[N] ;
+void dijkstra() {
+  queue<int> q ;
+  q.push(1) ;
+  memset(dp , 0x3f , sizeof dp) ;
+  dp[1][0] = 0 ;
+  vis[1] = 1 ;
+  while(q.size()) {
+    int u = q.front() ;
+    q.pop() ;
+    vis[u] = 0 ;
+    for(int i = h[u] ; ~i ; i = ne[i]) {
+      int v = e[i] ;
+      int maxn = max(dp[u][0] , w[i]) ;
+      if(dp[v][0] > maxn) {
+        dp[v][0] = maxn ;
+        if(!vis[v]) q.push(v) , vis[v] = 1 ;
+      }
+      for(int j = 1 ;j <= k ;j ++ ) {
+        int maxn = min(dp[u][j - 1] , max(dp[u][j] , w[i])) ;
+        if(dp[v][j] > maxn) {
+          dp[v][j] = maxn ;
+          if(!vis[v]) vis[v] = 1 , q.push(v) ;
+        }
+      }
+    }
+  }
+}
+int work()
+{
+  cin >> n >> m >> k ;
+  memset(h , -1 , sizeof h) ;
+  for(int i = 1; i <= m ;i ++ ) {
+    int a , b , c ;
+    cin >> a >> b >> c ;
+    add(a , b , c) , add(b , a , c) ;
+  }
+  dijkstra() ;
+  int ans = INF ;
+  for(int i = 0 ; i <= k ;i ++ )
+   ans = min(ans , dp[n][i]) ;
+  if(ans == INF) ans = -1 ;
+  cout << ans << "\n" ;
+  return 0 ;
+}
+```
+
