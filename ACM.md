@@ -121,9 +121,7 @@ void add(int a , int b , int c) {
 }
 bool spfa() {
   queue<int> q ;
-  memset(dis , 0x3f , sizeof dis) ;
-  dis[1] = 0 ;
-  for(int i = 1; i <= n ;i ++ ) q.push(i) , vis[i] = 1 ;
+  for(int i = 1; i <= n ;i ++ ) q.push(i) , vis[i] = 1 , dis[i] = 0  ;
   while(q.size()) {
     int u = q.front() ;
     q.pop() ;
@@ -373,5 +371,227 @@ int work()
   cout << ans << "\n" ;
   return 0 ;
 }
+```
+
+### 2.3	差分约束
+
+**学习链接：http://www.cppblog.com/menjitianya/archive/2015/11/19/212292.html**
+
+> 给定 n 个区间 [ai,biai,bi]和 n 个整数 cici。
+>
+> 你需要构造一个整数集合 Z，使得∀i∈[1,n]∀i∈[1,n],Z 中满足ai≤x≤biai≤x≤bi的整数 x 不少于 cici 个。
+>
+> 求这样的整数集合 Z 最少包含多少个数。
+
+设f[x] 为前x个数里面最少选择多少个数，那么每个条件就是f[b[i]] - f[a[i] - 1] >= c[i]  , 然后这就是差分约束
+
+1. f[b[i]] - f[a[i] - 1] >= c[i]   --------  加入边 a[i] - 1  ---- >  b[i] ,, 边权为c[i] 
+2. 对于每个点都和0点连边 0 - > i ，边权为0 
+3. 对于f[i] - f[i - 1] >= 0 , i - 1 --> i ,边权为0 
+4. 对于f[i] - f[i - 1] <= 1 --- > f[i - 1] - f[i] >= -1 , 所以建立边 i  --> i - 1 , 边权为 - 1 
+5. 最后求解最长边
+
+```cpp
+int n , e[N] , ne[N] , w[N] , h[N] , idx ;
+void add(int a,  int b , int c) {
+  e[idx] = b , ne[idx] = h[a] , w[idx] = c , h[a] = idx ++ ;
+}
+int vis[N] ;
+ll dis[N] ;
+void spfa() {
+  queue<int> q ;
+  memset(dis , -0x3f , sizeof dis) ;
+  q.push(0) ;
+  dis[0] = 0 ;
+  vis[0] = 1 ;
+  while(q.size()) {
+    int u = q.front() ;
+    q.pop() ;
+    vis[u] = 0 ;
+    for(int i = h[u] ; ~i ; i = ne[i]) {
+      int v = e[i] ;
+      if(dis[v] < dis[u] + w[i]) {
+        dis[v] = dis[u] + w[i] ;
+        if(!vis[v]) {
+          vis[v] = 1 ;
+          q.push(v) ;
+        }
+      }
+    }
+  }
+}
+int work()
+{
+  cin >> n ;
+  memset(h , -1 , sizeof h) ;
+  for(int i = 1; i <= n ;i ++ ) {
+    int a , b , c ;
+    cin >> a >> b >> c ;
+    add(a + 1 , b + 2 , c) ;
+  }
+  for(int i = 1 ;i <= 50003 ;i ++ )
+   add(i , i + 1 , 0) , add(i + 1 , i , -1) , add(0 , i , 0) ;
+  ll ans = 0 ;
+  spfa() ;
+  for(int i = 1; i <= 50003 ;i ++ )
+   ans = max(ans , dis[i]) ;
+  cout << ans << "\n" ;
+  return 0 ;
+}
+```
+
+
+
+## 6	数论
+
+### 6.6	0/1分数规划
+
+所谓的0/1分数规划，就是求解
+$$
+\frac{\sum_i^n{a[i]}*x[i]}{\sum_i^n{b[i]}*x[i]} , x[i] = 0 , 1
+$$
+这个公式最值。
+
+也就是对于一系列数组a 和 b，其中每个数组都有选择与不选。然后求解其公式最值。
+
+如果我们假设其最小值等于L ，那么得到
+$$
+\frac{\sum_i^n{a[i]}*x[i]}{\sum_i^n{b[i]}*x[i]} >= L
+$$
+移向得到
+$$
+{\sum_i^n{a[i]}*x[i]} >= L * {\sum_i^n{b[i]}*x[i]}\\=>{\sum_i^n{a[i]}*x[i]} - L * {\sum_i^n{b[i]}*x[i]} >= 0
+$$
+可以发现如果我们枚举L 这个最小值，那么可以判断这个公式是否成立，也就相当于我们可以枚举L时，判断L是否合法，符合单调性。
+
+然后我们就可以二分求解。
+
+> **观光奶牛**
+>
+> 给定一张L个点、P条边的有向图，每个点都有一个权值f[i]，每条边都有一个权值t[i]。
+>
+> 求图中的一个环，使“环上各点的权值之和”除以“环上各边的权值之和”最大。
+>
+> 输出这个最大值。
+>
+> **注意**：数据保证至少存在一个环。
+
+**即需要找到一个环**
+$$
+max \frac{\sum f[i]}{\sum t[i]} 
+$$
+假设最大值为ans , 那么如果设mid = 当前值，如果ans >= mid ， 即
+$$
+\frac{\sum f[i]}{\sum t[i]} >= mid\\->
+mid * \sum t[i] - \sum f[i] <= 0\\->
+\sum (mid*t[i]-f[i]) <= 0
+$$
+如果我们将每条边全设置为mid * 原本的边权- 出点的点权， 那么这个公式就表示出现负环。
+
+现在我们就直接枚举mid ， 如果符合上述条件，出现负环，则l = mid , 否则r = mid ;
+
+
+
+```cpp
+/*
+ *@author spnooyseed
+ */
+#pragma GCC optimize("Ofast","unroll-loops","omit-frame-pointer","inline")
+#pragma GCC optimize(3 , "Ofast" , "inline")
+#pragma GCC optimize("Ofast")
+#pragma GCC target("avx,avx2,fma")
+#pragma GCC optimization("unroll-loops")
+#include <iostream>
+#include <cstdio>
+#include <algorithm>
+#include <unordered_map>
+#include <vector>
+#include <map>
+#include <list>
+#include <queue>
+#include <cstring>
+#include <cstdlib>
+#include <ctime>
+#include <cmath>
+#include <stack>
+#include <set>
+#include <bitset>
+#include <deque>
+using namespace std ;
+#define ios ios::sync_with_stdio(false) , cin.tie(0)
+#define x first
+#define y second
+#define pb push_back
+#define ls rt << 1
+#define rs rt << 1 | 1
+typedef long long ll ;
+const double esp = 1e-6 , pi = acos(-1) ;
+typedef pair<int , int> PII ;
+const int N = 10000 + 10 , INF = 0x3f3f3f3f , mod = 1e9 + 7;
+int n , m ;
+double f[N] ;
+struct node {
+  int u , v ;
+  double w ;
+}edge[N];
+int e[N] , ne[N] , h[N] , idx ;
+double w[N] ;
+void add(int a , int b , double c) {
+  e[idx] = b , ne[idx] = h[a] , w[idx] = c , h[a] = idx ++ ;
+}
+int cnt[N] , vis[N] ;
+double dis[N] ;
+bool check(double mid) {
+  idx = 0 ;
+  memset(h , -1 , sizeof h) ;
+  for(int i = 1; i <= m ;i ++ )
+    add(edge[i].u , edge[i].v , edge[i].w * mid - f[edge[i].u]) ;
+  queue<int> q ;
+  for(int i = 1; i <= n ;i ++ )  dis[i] = 0 , vis[i] = 1 , q.push(i) , cnt[i] = 0;
+  while(q.size()) {
+    int u = q.front() ;
+    q.pop() ;
+    vis[u] = 0 ;
+    if(cnt[u] >= n) return true ;
+    for(int i = h[u] ; ~i ; i = ne[i]) {
+      int v = e[i] ;
+      if(dis[v] > dis[u] + w[i]) {
+        dis[v] = dis[u] + w[i] ;
+        cnt[v] ++ ;
+        if(!vis[v]) {
+          vis[v] = 1 ;
+          q.push(v) ;
+          if(cnt[v] >= n) return true ;
+        }
+      }
+    }
+  }
+  return false ;
+}
+int work()
+{
+  cin >> n >> m ;
+  for(int i = 1; i <= n ;i ++ ) cin >> f[i] ;
+  for(int i = 1; i <= m ;i ++ )
+    cin >> edge[i].u >> edge[i].v >> edge[i].w ;
+  double l = 0.0 , r = INF , ans = 0 ;
+  while(fabs(r - l) > esp) {
+    double mid = (l + r) / 2.0 ;
+    if(check(mid)) l = mid , ans = mid ;
+    else r = mid ;
+  }
+  printf("%.2lf\n" , ans) ;
+  return 0 ;
+}
+int main()
+{
+  //   freopen("C://Users//spnooyseed//Desktop//in.txt" , "r" , stdin) ;
+  //   freopen("C://Users//spnooyseed//Desktop//out.txt" , "w" , stdout) ;
+  work() ;
+  return 0 ;
+}
+/*
+*/
+
 ```
 
