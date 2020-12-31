@@ -448,6 +448,161 @@ int work()
 
 **House Man**	http://acm.hdu.edu.cn/showproblem.php?pid=3440
 
+### 2.5	欧拉路径(待补)
+
+### 2.6	kruskal重构树
+
+**这个东西主要是用来处理最小生成树的最大边权问题，当然也可以处理最大生成树的最小边权问题**
+
+**构造kruskal重构树的过程：**
+
+**在kruskal过程中，如果当前这个条边连接的两个点x , y不在同一个集合中，那么就新建立一个T点，连接x点和y点，同时这个T点的边权等于这条边的边权**
+
+**这个重构树的性质：**
+
+**1、原本最小生成树上的点都是重构树的叶子节点**
+
+**2、从任何一个点往根路径上引一条路径，这条路径经过的点的点权单调不降**
+
+**3、任意两点之间的路径的最大边权就是他们的LCA的点券**
+
+模板题：给一张图，每次询问两点间的路径最大值最小是多少。
+
+做法：构造kruskal重构树，求lca点权
+
+**例题：水灾	https://ac.nowcoder.com/acm/contest/5205/E**
+
+**题意:	给一个图，然后有多次操作，强制在线；每次操作求一个最小的x，那么删除所有小于等于x的边，使得给定的k个点两两之间不连通，如果考虑kruskal重构树，就是求一个k个点之间的最大边权的最小值。直接构造一个小根堆，然后求解lca。对于k个点只需要根据dfs序排序，然后相邻两点之间求lca，最后取个最大值。为何只需要相邻两点直接求lca，因为在小根堆，如果不是相邻点的话，得到的lca点权只会更小，在这个情况下，很有可能比它大的不会被删掉，但是依旧存在两两联通**
+
+```cpp
+/*
+ *@author spnooyseed
+ */
+#pragma GCC optimize("Ofast","unroll-loops","omit-frame-pointer","inline")
+#pragma GCC optimize(3 , "Ofast" , "inline")
+#pragma GCC optimize("Ofast")
+#pragma GCC target("avx,avx2,fma")
+#pragma GCC optimization("unroll-loops")
+#include <iostream>
+#include <cstdio>
+#include <algorithm>
+#include <unordered_map>
+#include <vector>
+#include <map>
+#include <list>
+#include <queue>
+#include <cstring>
+#include <cstdlib>
+#include <ctime>
+#include <cmath>
+#include <stack>
+#include <set>
+#include <bitset>
+#include <deque>
+using namespace std ;
+#define ios ios::sync_with_stdio(false) , cin.tie(0)
+#define x first
+#define y second
+#define pb push_back
+#define ls rt << 1
+#define rs rt << 1 | 1
+typedef long long ll ;
+const double esp = 1e-6 , pi = acos(-1) ;
+typedef pair<int , int> PII ;
+const int N = 1e6 + 10 , INF = 0x3f3f3f3f , mod = 1e9 + 7;
+int n , m , fa[N] , q ;
+struct node {
+  int u , v , w ;
+  node() {}
+  node(int u , int v , int w) : u(u) , v(v) , w(w) {}
+  bool operator<(const node &a) {
+    return w > a.w ;
+  }
+}edge[N];
+int find(int x) {
+  return fa[x] == x ? x : fa[x] = find(fa[x]) ;
+}
+int s = 0 , val[N] ;
+vector<int> v[N] ;
+int idx = 0 ;
+int dfn[N] ;
+int f[N][20] , deep[N] ;
+void dfs(int u , int ff) {
+  dfn[u] = ++ idx ;
+  f[u][0] = ff ;
+  deep[u] = deep[ff] + 1 ;
+  for(int i = 1; i < 20 ;i ++ ) f[u][i] = f[f[u][i - 1]][i - 1] ;
+  for(auto x : v[u]) {
+    if(x == ff) continue ;
+    dfs(x , u) ;
+  }
+}
+int lca(int x , int y) {
+  if(deep[x] < deep[y]) swap(x , y) ;
+  for(int i = 19 ;i >= 0 ;i -- )
+   if(deep[f[x][i]] >= deep[y])
+     x = f[x][i] ;
+  if(x == y) return x ;
+  for(int i = 19 ;i >= 0 ;i -- )
+    if(f[x][i] != f[y][i]) x = f[x][i] , y = f[y][i] ;
+  return f[x][0] ;
+}
+int a[N] ;
+bool cmp(int x , int y) {
+  return dfn[x] < dfn[y] ;
+}
+int work()
+{
+  scanf("%d%d%d" , &n , &m , &q) ;
+  for(int i = 1; i <= m ;i ++ ) {
+    int a , b , c ;
+    scanf("%d%d%d" , &a , &b , &c) ;
+    edge[i] = {a , b , c} ;
+  }
+  sort(edge + 1 , edge + m + 1) ;
+  s = n ;
+  for(int i = 1; i <= (n << 1) ;i ++ ) fa[i] = i ;
+  for(int i = 1 ;i <= m ;i ++ ) {
+    int fu = find(edge[i].u) , fv = find(edge[i].v) ;
+    if(fu != fv) {
+      ++ s ;
+      v[s].pb(fu) ;
+      v[s].pb(fv) ;
+      fa[fu] = fa[fv] = s ;
+      val[s] = edge[i].w ;
+    }
+  }
+  dfs(s , 0) ;
+  int res = 0 ;
+
+  while(q --) {
+    int k ;
+    scanf("%d" , &k) ;
+    for(int i = 1; i <= k ;i ++ ) scanf("%d" , &a[i]) , a[i] ^= res ;
+    sort(a + 1 , a + k + 1 , cmp) ;
+    int ans = 0 ;
+    for(int i = 2; i <= k ;i ++ )
+     ans = max(ans , val[lca(a[i] , a[i - 1])]) ;
+    res = ans ;
+    cout << res << "\n" ;
+  }
+  return 0 ;
+}
+int main()
+{
+  //   freopen("C://Users//spnooyseed//Desktop//in.txt" , "r" , stdin) ;
+  //   freopen("C://Users//spnooyseed//Desktop//out.txt" , "w" , stdout) ;
+
+  work() ;
+  return 0 ;
+}
+/*
+*/
+
+```
+
+
+
 ## 6	数论
 
 ### 6.6	0/1分数规划
