@@ -1,4 +1,4 @@
-
+6
 
 # ACM模板
 
@@ -373,7 +373,7 @@ int work()
 }
 ```
 
-### 2.3	差分约束
+### 2.4	差分约束
 
 **学习链接：http://www.cppblog.com/menjitianya/archive/2015/11/19/212292.html**
 
@@ -440,7 +440,13 @@ int work()
 }
 ```
 
+**差分约束练习题：**
 
+**World Exhibition** 	http://acm.hdu.edu.cn/showproblem.php?pid=3592
+
+**Intervals**  	http://poj.org/problem?id=1201
+
+**House Man**	http://acm.hdu.edu.cn/showproblem.php?pid=3440
 
 ## 6	数论
 
